@@ -1,7 +1,6 @@
 import React from "react";
 import Post1 from "../assets/post1.png";
 import Post2 from "../assets/post2.png";
-import "./ComponentStyles.css"; // Custom CSS for grid styling
 
 const ProfileView = ({ data }) => {
   return (
@@ -12,7 +11,7 @@ const ProfileView = ({ data }) => {
         adipisicing elit. Sint beatae💕.
       </p>
       <h5 className="mt-3 font-semibold text-lg">My Posts</h5>
-      {/* Use grid class for 2 columns */}
+     
       <div className="mt-2 columns-2 sm:columns-2 md:columns-2 lg:columns-2 gap-4 space-y-4">
         <img
           src={Post1}

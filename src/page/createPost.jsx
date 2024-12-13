@@ -1,98 +1,152 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { useAppContext } from "../context/ContextApi";
 
-const CreatePostPage = ({ images, onBack, onCreate }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [description, setDescription] = useState("");
+const CreatePostPage = () => {
+  const { addPost } = useAppContext();
+  const [text, setText] = useState("");
+  const [images, setImages] = useState([]);
+  const [video, setVideo] = useState(null);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [cameraImage, setCameraImage] = useState(null);
 
-  const handleNextImage = () => {
-    if (currentIndex < images.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  const handleImageChange = (event) => {
+    const selectedImages = Array.from(event.target.files);
+    setImages((prevImages) => [...prevImages, ...selectedImages]);
+  };
+
+  const handleVideoChange = (event) => {
+    setVideo(event.target.files[0]);
+  };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setCameraStream(stream);
+      videoRef.current.srcObject = stream;
+      videoRef.current.play();
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      alert("Camera access failed. Please try again.");
     }
   };
 
-  const handlePrevImage = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+  const captureImage = () => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    const imageUrl = canvas.toDataURL("image/png");
+    setCameraImage(imageUrl);
+    stopCamera();
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      const tracks = cameraStream.getTracks();
+      tracks.forEach((track) => track.stop());
+      setCameraStream(null);
     }
+  };
+
+  const handleCreatePost = () => {
+    const newPost = {
+      text,
+      images,
+      video,
+      cameraImage,
+      timestamp: new Date().toISOString(),
+    };
+
+    addPost(newPost);
+    setText("");
+    setImages([]);
+    setVideo(null);
+    setCameraImage(null);
+    window.history.back(); // Go back to the previous page
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <div className="flex justify-between items-center px-4 py-3 border-b border-gray-300">
-        <button
-          onClick={onBack}
-          className="text-blue-600 text-lg font-semibold"
-        >
-          &larr; Back
-        </button>
-        <p className="font-bold text-lg">Create Post</p>
-        <div />
-      </div>
+    <div className="min-h-screen flex justify-center items-center bg-gray-100">
+      <div className="w-full sm:w-[360px] min-h-screen md:w-[375px] lg:w-[386px] bg-white rounded-lg shadow-lg p-4">
+        <header className="flex items-center justify-between pb-2 border-b border-gray-300">
+          <button onClick={() => window.history.back()}>&larr; Back</button>
+          <h2 className="text-lg font-semibold">New Post</h2>
+        </header>
 
-      {/* Image Carousel */}
-      <div className="relative flex-grow bg-gray-100">
-        <img
-          src={images[currentIndex]}
-          alt={`Selected ${currentIndex + 1}`}
-          className="w-full h-auto max-h-full object-contain"
-        />
-
-        {/* Page Counter */}
-        <div className="absolute top-4 right-4 bg-black text-white text-xs py-1 px-2 rounded">
-          {currentIndex + 1}/{images.length}
-        </div>
-
-        {/* Carousel Dots */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-          {images.map((_, index) => (
-            <div
-              key={index}
-              className={`w-2 h-2 rounded-full ${
-                index === currentIndex ? "bg-black" : "bg-gray-400"
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Navigation Arrows */}
-        {currentIndex > 0 && (
-          <button
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white bg-black bg-opacity-50 rounded-full p-2"
-            onClick={handlePrevImage}
-          >
-            &larr;
-          </button>
-        )}
-        {currentIndex < images.length - 1 && (
-          <button
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white bg-black bg-opacity-50 rounded-full p-2"
-            onClick={handleNextImage}
-          >
-            &rarr;
-          </button>
-        )}
-      </div>
-
-      {/* Description Input */}
-      <div className="p-4">
         <textarea
-          className="w-full border-b border-gray-400 p-2 text-sm"
-          rows="4"
-          placeholder="Write a description..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
+          placeholder="What's on your mind?"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className="w-full mt-4 border rounded-lg p-2 resize-none h-24"
+        ></textarea>
 
-      {/* Create Button */}
-      <div className="p-4">
-        <button
-          className="w-full bg-black text-white py-3 rounded-md text-center text-lg font-semibold"
-          onClick={() => onCreate({ images, description })}
-        >
-          Create
-        </button>
+        {/* Media Uploads */}
+        <div className="mt-4">
+          <h3 className="font-semibold">Add Media</h3>
+          
+          {/* Photos Section */}
+          <label className="block mt-2 cursor-pointer">
+            <span className="text-green-500">📷 Photos</span>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+          </label>
+          
+          {/* Video Section */}
+          <label className="block mt-2 cursor-pointer">
+            <span className="text-blue-500">🎥 Video</span>
+            <input
+              type="file"
+              accept="video/*"
+              onChange={handleVideoChange}
+              className="hidden"
+            />
+          </label>
+          
+          {/* Camera Section */}
+          <div className="mt-4">
+            <button
+              onClick={startCamera}
+              className="bg-green-500 text-white w-full py-2 rounded-lg"
+            >
+              Access Camera
+            </button>
+            {cameraStream && (
+              <div className="mt-4">
+                <video ref={videoRef} width="100%" height="auto" />
+                <canvas ref={canvasRef} width="0" height="0" style={{ display: "none" }} />
+                <button
+                  onClick={captureImage}
+                  className="bg-blue-500 text-white w-full py-2 rounded-lg mt-2"
+                >
+                  Capture Image
+                </button>
+              </div>
+            )}
+            {cameraImage && (
+              <div className="mt-4">
+                <h4 className="font-semibold">Captured Image</h4>
+                <img src={cameraImage} alt="Captured" className="w-full h-auto rounded-md" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Create Post Button */}
+        <div className="mt-4">
+          <button
+            onClick={handleCreatePost}
+            className="bg-blue-500 text-white w-full py-2 rounded-lg"
+          >
+            Create Post
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -59,11 +59,11 @@ const ImageGrid = () => {
         ))}
       </div>
       <div
-        className="pt-10 pb-[10rem] px-6 bg-white shadow-lg w-full text-center rounded-tl-[22%] rounded-tr-[22%]
+        className="pt-10 pb-[10rem] px-6 bg-white shadow-lg w-full text-center rounded-tl-[8%] rounded-tr-[8%]
         relative -top-[32%] 
         "
       >
-        <h1 className="text-3xl font-bold text-gray-800">⛷️Vibesnap</h1>
+        <h1 className="text-3xl font-bold text-gray-800">📸 Vibesnap</h1>
         <p className="text-md text-gray-800 mt-1">
           Moments That Matter, Shared Forever.
         </p>
